@@ -16,10 +16,11 @@ import { ResultsChart } from "@/components/dashboard/ResultsChart";
 import { ProfileCharts } from "@/components/dashboard/ProfileCharts";
 import { RecentSubmissionsTable } from "@/components/dashboard/RecentSubmissionsTable";
 import { RaffleStatsCard } from "@/components/dashboard/RaffleStatsCard";
+import { RawDataTable } from "@/components/dashboard/RawDataTable";
 import { DashboardSkeleton, ErrorState } from "@/components/dashboard/States";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuizSubmissions, useRaffleEntries } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
-import { isSupabaseConfigured } from "@/lib/supabase";
 import { EMPTY_FILTERS, type DashboardFilters } from "@/types/dashboard";
 import { formatDuration, formatNumber, formatPercent } from "@/lib/format";
 
@@ -42,19 +43,14 @@ function DashboardPage() {
   const navigate = useNavigate();
   const { session, loading: authLoading, signOut, user } = useAuth();
   const [filters, setFilters] = useState<DashboardFilters>(EMPTY_FILTERS);
-
-  const demoMode = !isSupabaseConfigured;
-  const authed = Boolean(session) || demoMode;
+  const [activeTab, setActiveTab] = useState<"dashboard" | "raw">("dashboard");
 
   useEffect(() => {
-    if (!authLoading && !authed) navigate({ to: "/login", replace: true });
-  }, [authLoading, authed, navigate]);
+    if (!authLoading && !session) navigate({ to: "/login", replace: true });
+  }, [authLoading, session, navigate]);
 
-  const quiz = useQuizSubmissions(filters, authed);
-  const raffle = useRaffleEntries(
-    { from: filters.from, to: filters.to },
-    authed,
-  );
+  const quiz = useQuizSubmissions(filters, session);
+  const raffle = useRaffleEntries({ from: filters.from, to: filters.to }, session);
 
   const submissions = quiz.data ?? [];
   const entries = raffle.data ?? [];
@@ -97,7 +93,7 @@ function DashboardPage() {
     };
   }, [submissions, entries]);
 
-  if (authLoading || (!authed && !demoMode)) {
+  if (authLoading || !session) {
     return (
       <div
         className="min-h-screen p-4 md:p-8"
@@ -118,129 +114,146 @@ function DashboardPage() {
     >
       <div className="mx-auto max-w-7xl space-y-6">
         <DashboardHeader
-          email={user?.email}
-          onSignOut={
-            session
-              ? async () => {
-                  await signOut();
-                  navigate({ to: "/login" });
-                }
-              : undefined
-          }
-          demoMode={demoMode}
+          username={user?.username}
+          onSignOut={() => {
+            signOut();
+            navigate({ to: "/login" });
+          }}
         />
 
-        <FiltersBar
-          filters={filters}
-          onChange={setFilters}
-          submissions={submissions}
-        />
+        {/* Main tabs */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "dashboard" | "raw")}
+        >
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="raw">Datos crudos</TabsTrigger>
+          </TabsList>
 
-        {error ? (
-          <ErrorState
-            message={(error as Error).message}
-            onRetry={() => {
-              quiz.refetch();
-              raffle.refetch();
-            }}
-          />
-        ) : isLoading ? (
-          <DashboardSkeleton />
-        ) : (
-          <>
-            <StatsCards>
-              <KpiCard
-                label="Cuestionarios"
-                value={formatNumber(kpis.total)}
-                hint="Total en el rango"
-                icon={<Users className="h-5 w-5" />}
-                accent="orange"
-              />
-              <KpiCard
-                label="Sorteo"
-                value={formatNumber(kpis.totalRaffle)}
-                hint="Inscripciones"
-                icon={<Ticket className="h-5 w-5" />}
-                accent="blue"
-              />
-              <KpiCard
-                label="Duración media"
-                value={formatDuration(kpis.avg)}
-                hint={
-                  kpis.min != null && kpis.max != null
-                    ? `min ${formatDuration(kpis.min)} · máx ${formatDuration(kpis.max)}`
-                    : undefined
-                }
-                icon={<Timer className="h-5 w-5" />}
-              />
-              <KpiCard
-                label="Resultado más frecuente"
-                value={kpis.topResult ?? "—"}
-                icon={<Trophy className="h-5 w-5" />}
-                accent="orange"
-              />
-              <KpiCard
-                label="Centro más frecuente"
-                value={kpis.topCentro ?? "—"}
-                icon={<Building2 className="h-5 w-5" />}
-                accent="blue"
-              />
-              <KpiCard
-                label="Con 2º / 3º resultado"
-                value={`${formatPercent(kpis.pctSecond)} · ${formatPercent(kpis.pctThird)}`}
-                hint="% del total"
-                icon={<Layers className="h-5 w-5" />}
-              />
-            </StatsCards>
-
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <ActivityChart
-                title="Cuestionarios completados"
-                description="Evolución de envíos en el tiempo"
-                dates={submissions.map((s) => s.created_at)}
-                color="orange"
-              />
-              <ActivityChart
-                title="Inscripciones al sorteo"
-                description="Evolución de participantes"
-                dates={entries.map((e) => e.created_at)}
-                color="blue"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <ResultsChart
-                title="Ranking · resultado principal"
-                description="Top 8 vocaciones"
-                values={submissions.map((s) => s.main_result)}
-                color="orange"
-              />
-              <ResultsChart
-                title="Ranking · 2º resultado"
-                values={submissions.map((s) => s.result_2)}
-                color="blue"
-              />
-              <ResultsChart
-                title="Ranking · 3º resultado"
-                values={submissions.map((s) => s.result_3)}
-                color="mix"
-              />
-            </div>
-
-            <ProfileCharts
-              generos={submissions.map((s) => s.genero)}
-              edades={submissions.map((s) => s.edad)}
-              centros={submissions.map((s) => s.centro)}
+          {/* Filters apply to both tabs */}
+          <div className="mt-4">
+            <FiltersBar
+              filters={filters}
+              onChange={setFilters}
+              submissions={submissions}
             />
+          </div>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <RecentSubmissionsTable submissions={submissions} />
-              </div>
-              <RaffleStatsCard entries={entries} />
-            </div>
-          </>
-        )}
+          {error ? (
+            <ErrorState
+              message={(error as Error).message}
+              onRetry={() => {
+                quiz.refetch();
+                raffle.refetch();
+              }}
+            />
+          ) : isLoading ? (
+            <DashboardSkeleton />
+          ) : (
+            <>
+              {/* ── Dashboard tab ── */}
+              <TabsContent value="dashboard" className="space-y-6 mt-4">
+                <StatsCards>
+                  <KpiCard
+                    label="Cuestionarios"
+                    value={formatNumber(kpis.total)}
+                    hint="Total en el rango"
+                    icon={<Users className="h-5 w-5" />}
+                    accent="orange"
+                  />
+                  <KpiCard
+                    label="Sorteo"
+                    value={formatNumber(kpis.totalRaffle)}
+                    hint="Inscripciones"
+                    icon={<Ticket className="h-5 w-5" />}
+                    accent="blue"
+                  />
+                  <KpiCard
+                    label="Duración media"
+                    value={formatDuration(kpis.avg)}
+                    hint={
+                      kpis.min != null && kpis.max != null
+                        ? `min ${formatDuration(kpis.min)} · máx ${formatDuration(kpis.max)}`
+                        : undefined
+                    }
+                    icon={<Timer className="h-5 w-5" />}
+                  />
+                  <KpiCard
+                    label="Resultado más frecuente"
+                    value={kpis.topResult ?? "—"}
+                    icon={<Trophy className="h-5 w-5" />}
+                    accent="orange"
+                  />
+                  <KpiCard
+                    label="Centro más frecuente"
+                    value={kpis.topCentro ?? "—"}
+                    icon={<Building2 className="h-5 w-5" />}
+                    accent="blue"
+                  />
+                  <KpiCard
+                    label="Con 2º / 3º resultado"
+                    value={`${formatPercent(kpis.pctSecond)} · ${formatPercent(kpis.pctThird)}`}
+                    hint="% del total"
+                    icon={<Layers className="h-5 w-5" />}
+                  />
+                </StatsCards>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <ActivityChart
+                    title="Cuestionarios completados"
+                    description="Evolución de envíos en el tiempo"
+                    dates={submissions.map((s) => s.created_at)}
+                    color="orange"
+                  />
+                  <ActivityChart
+                    title="Inscripciones al sorteo"
+                    description="Evolución de participantes"
+                    dates={entries.map((e) => e.created_at)}
+                    color="blue"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                  <ResultsChart
+                    title="Ranking · resultado principal"
+                    description="Top 8 vocaciones"
+                    values={submissions.map((s) => s.main_result)}
+                    color="orange"
+                  />
+                  <ResultsChart
+                    title="Ranking · 2º resultado"
+                    values={submissions.map((s) => s.result_2)}
+                    color="blue"
+                  />
+                  <ResultsChart
+                    title="Ranking · 3º resultado"
+                    values={submissions.map((s) => s.result_3)}
+                    color="mix"
+                  />
+                </div>
+
+                <ProfileCharts
+                  generos={submissions.map((s) => s.genero)}
+                  edades={submissions.map((s) => s.edad)}
+                  centros={submissions.map((s) => s.centro)}
+                />
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                  <div className="lg:col-span-2">
+                    <RecentSubmissionsTable submissions={submissions} />
+                  </div>
+                  <RaffleStatsCard entries={entries} />
+                </div>
+              </TabsContent>
+
+              {/* ── Datos crudos tab ── */}
+              <TabsContent value="raw" className="mt-4">
+                <RawDataTable submissions={submissions} entries={entries} />
+              </TabsContent>
+            </>
+          )}
+        </Tabs>
 
         <footer className="pt-4 text-center text-xs text-muted-foreground">
           CPIFP El Arenal · Panel interno de orientación vocacional

@@ -1,10 +1,9 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { GraduationCap, LogIn } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/login")({
@@ -13,8 +12,8 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { session } = useAuth();
-  const [email, setEmail] = useState("");
+  const { session, signIn } = useAuth();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,14 +22,17 @@ function LoginPage() {
     if (session) navigate({ to: "/dashboard", replace: true });
   }, [session, navigate]);
 
-  async function onSubmit(e: React.FormEvent) {
+  function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const ok = signIn(username, password);
     setLoading(false);
-    if (error) setError(error.message);
-    else navigate({ to: "/dashboard", replace: true });
+    if (!ok) {
+      setError("Usuario o contraseña incorrectos.");
+    } else {
+      navigate({ to: "/dashboard", replace: true });
+    }
   }
 
   return (
@@ -65,30 +67,20 @@ function LoginPage() {
           </div>
         </div>
 
-        {!isSupabaseConfigured && (
-          <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800">
-            Supabase no está configurado. Define <code>VITE_SUPABASE_URL</code> y{" "}
-            <code>VITE_SUPABASE_ANON_KEY</code>. Puedes ver el dashboard en modo demo desde{" "}
-            <Link to="/dashboard" className="font-semibold underline">
-              aquí
-            </Link>
-            .
-          </div>
-        )}
-
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4" autoComplete="off">
           <div>
-            <Label htmlFor="email" className="mb-1 text-xs text-muted-foreground">
-              Correo
+            <Label htmlFor="username" className="mb-1 text-xs text-muted-foreground">
+              Usuario
             </Label>
             <Input
-              id="email"
-              type="email"
+              id="username"
+              type="text"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="rounded-xl"
-              placeholder="tu@email.com"
+              placeholder="usuario"
+              autoComplete="off"
             />
           </div>
           <div>
@@ -103,6 +95,7 @@ function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="rounded-xl"
               placeholder="••••••••"
+              autoComplete="new-password"
             />
           </div>
           {error && (

@@ -2,15 +2,13 @@ import { GraduationCap, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  email?: string | null;
+  username?: string | null;
   onSignOut?: () => void;
-  demoMode?: boolean;
 }
 
-export function DashboardHeader({ email, onSignOut, demoMode }: Props) {
+export function DashboardHeader({ username, onSignOut }: Props) {
   return (
     <header className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-card)] md:p-8">
-      {/* decorative blobs */}
       <div
         aria-hidden
         className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full opacity-30 blur-3xl"
@@ -44,15 +42,10 @@ export function DashboardHeader({ email, onSignOut, demoMode }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
-          {demoMode && (
-            <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-              Modo demo · sin conexión Supabase
-            </span>
-          )}
-          {email && (
+          {username && (
             <div className="hidden text-right md:block">
               <p className="text-xs text-muted-foreground">Sesión</p>
-              <p className="text-sm font-medium text-foreground">{email}</p>
+              <p className="text-sm font-medium text-foreground">{username}</p>
             </div>
           )}
           {onSignOut && (

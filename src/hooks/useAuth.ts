@@ -1,30 +1,32 @@
-import { useEffect, useState } from "react";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { Session } from "@supabase/supabase-js";
+import { useState } from "react";
+
+const AUTH_KEY = "cpifp_admin_auth";
 
 export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(AUTH_KEY) === "1";
+  });
 
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      return;
+  function signIn(username: string, password: string): boolean {
+    if (username.trim() === "cpifp" && password.trim() === "cpifparenal") {
+      localStorage.setItem(AUTH_KEY, "1");
+      setSession(true);
+      return true;
     }
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
-      setSession(s);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
+    return false;
+  }
+
+  function signOut() {
+    localStorage.removeItem(AUTH_KEY);
+    setSession(false);
+  }
 
   return {
     session,
-    user: session?.user ?? null,
-    loading,
-    signOut: () => supabase.auth.signOut(),
+    loading: false,
+    user: session ? { username: "cpifp" } : null,
+    signIn,
+    signOut,
   };
 }
