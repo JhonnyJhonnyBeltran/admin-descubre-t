@@ -1,30 +1,66 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { DashboardFilters } from "@/types/dashboard";
 import type { QuizSubmission } from "@/types/dashboard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Filter, X } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface Props {
   filters: DashboardFilters;
   onChange: (next: DashboardFilters) => void;
   submissions: QuizSubmission[];
+  allSubmissions?: QuizSubmission[];
 }
 
 function uniq(values: (string | null)[]): string[] {
   return Array.from(new Set(values.filter((v): v is string => Boolean(v)))).sort();
 }
 
-export function FiltersBar({ filters, onChange, submissions }: Props) {
+export function FiltersBar({ filters, onChange, submissions, allSubmissions }: Props) {
+  const source = allSubmissions && allSubmissions.length ? allSubmissions : submissions;
+
+  const mapAgeToRange = (ageRaw: string | null) => {
+    if (!ageRaw) return "Sin indicar";
+    const n = Number(ageRaw);
+    if (n >= 16 && n <= 18) return "16-18";
+    if (n > 18 && n <= 21) return "18-21";
+    if (n > 21 && n <= 25) return "21-25";
+    if (n > 25 && n <= 35) return "25-35";
+    if (n > 35) return "+35";
+    return "Sin indicar";
+  };
+
   const options = useMemo(
-    () => ({
-      centros: uniq(submissions.map((s) => s.centro)),
-      generos: uniq(submissions.map((s) => s.genero)),
-      edades: uniq(submissions.map((s) => s.edad)),
-      results: uniq(submissions.map((s) => s.main_result)),
-    }),
-    [submissions],
+    () => {
+      const order = ["16-18", "18-21", "21-25", "25-35", "+35"];
+      const edadesRaw = uniq(source.map((s) => mapAgeToRange(s.edad)));
+      edadesRaw.sort((a, b) => {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        const na = ia === -1 ? order.length : ia;
+        const nb = ib === -1 ? order.length : ib;
+        return na - nb || a.localeCompare(b);
+      });
+
+      return {
+        centros: uniq(source.map((s) => s.centro)),
+        generos: uniq(source.map((s) => s.genero)),
+        edades: edadesRaw,
+        results: uniq(source.map((s) => s.main_result)),
+      };
+    },
+    [source],
   );
 
   const set = <K extends keyof DashboardFilters>(key: K, value: DashboardFilters[K]) =>
@@ -46,16 +82,20 @@ export function FiltersBar({ filters, onChange, submissions }: Props) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() =>
+            onClick={() => {
+              const to = new Date();
+              const from = new Date(to);
+              from.setMonth(from.getMonth() - 1);
+              const fmt = (d: Date) => d.toISOString().slice(0, 10);
               onChange({
-                from: null,
-                to: null,
+                from: fmt(from),
+                to: fmt(to),
                 centro: null,
                 genero: null,
                 edad: null,
                 main_result: null,
-              })
-            }
+              });
+            }}
           >
             <X className="mr-1 h-4 w-4" />
             Limpiar
@@ -66,83 +106,116 @@ export function FiltersBar({ filters, onChange, submissions }: Props) {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         <div>
           <Label className="mb-1 text-xs text-muted-foreground">Desde</Label>
-          <Input
-            type="date"
-            value={filters.from ?? ""}
-            onChange={(e) => set("from", e.target.value || null)}
-            className="rounded-xl"
+          <DatePicker
+            value={filters.from}
+            onChange={(v) => set("from", v)}
+            placeholder="Todas"
           />
         </div>
         <div>
           <Label className="mb-1 text-xs text-muted-foreground">Hasta</Label>
-          <Input
-            type="date"
-            value={filters.to ?? ""}
-            onChange={(e) => set("to", e.target.value || null)}
-            className="rounded-xl"
+          <DatePicker
+            value={filters.to}
+            onChange={(v) => set("to", v)}
+            placeholder="Todas"
           />
         </div>
         <div>
           <Label className="mb-1 text-xs text-muted-foreground">Centro</Label>
-          <select
-            className={selectCls}
-            value={filters.centro ?? ""}
-            onChange={(e) => set("centro", e.target.value || null)}
-          >
-            <option value="">Todos</option>
-            {options.centros.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <Select value={filters.centro ?? "__all__"} onValueChange={(v) => set("centro", v === "__all__" ? null : v)}>
+            <SelectTrigger className={selectCls}>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {options.centros.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="mb-1 text-xs text-muted-foreground">Género</Label>
-          <select
-            className={selectCls}
-            value={filters.genero ?? ""}
-            onChange={(e) => set("genero", e.target.value || null)}
-          >
-            <option value="">Todos</option>
-            {options.generos.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <Select value={filters.genero ?? "__all__"} onValueChange={(v) => set("genero", v === "__all__" ? null : v)}>
+            <SelectTrigger className={selectCls}>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {options.generos.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="mb-1 text-xs text-muted-foreground">Edad</Label>
-          <select
-            className={selectCls}
-            value={filters.edad ?? ""}
-            onChange={(e) => set("edad", e.target.value || null)}
-          >
-            <option value="">Todas</option>
-            {options.edades.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <Select value={filters.edad ?? "__all__"} onValueChange={(v) => set("edad", v === "__all__" ? null : v)}>
+            <SelectTrigger className={selectCls}>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todas</SelectItem>
+              {options.edades.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="mb-1 text-xs text-muted-foreground">Resultado</Label>
-          <select
-            className={selectCls}
-            value={filters.main_result ?? ""}
-            onChange={(e) => set("main_result", e.target.value || null)}
-          >
-            <option value="">Todos</option>
-            {options.results.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <Select value={filters.main_result ?? "__all__"} onValueChange={(v) => set("main_result", v === "__all__" ? null : v)}>
+            <SelectTrigger className={selectCls}>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos</SelectItem>
+              {options.results.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
+  );
+}
+
+function DatePicker({ value, onChange, placeholder }: { value: string | null; onChange: (v: string | null) => void; placeholder?: string }) {
+  const [open, setOpen] = useState(false);
+
+  const parsed = value ? new Date(value) : null;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Input
+          readOnly
+          className="rounded-xl cursor-pointer"
+          value={parsed ? format(parsed, "dd/MM/yyyy") : ""}
+          placeholder={placeholder}
+        />
+      </PopoverTrigger>
+      <PopoverContent>
+        <Calendar
+          mode="single"
+          selected={parsed ?? undefined}
+          onSelect={(d) => {
+            if (!d) return;
+            const iso = format(d, "yyyy-MM-dd");
+            onChange(iso);
+            setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }

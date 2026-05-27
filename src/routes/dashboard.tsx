@@ -35,7 +35,18 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardPage() {
   const navigate = useNavigate();
   const { session, loading: authLoading, signOut, user } = useAuth();
-  const [filters, setFilters] = useState<DashboardFilters>(EMPTY_FILTERS);
+  const getDefaultDateRange = (): Pick<DashboardFilters, 'from' | 'to'> => {
+    const to = new Date();
+    const from = new Date(to);
+    from.setMonth(from.getMonth() - 1);
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    return { from: fmt(from), to: fmt(to) };
+  };
+
+  const [filters, setFilters] = useState<DashboardFilters>({
+    ...EMPTY_FILTERS,
+    ...getDefaultDateRange(),
+  });
   const [activeTab, setActiveTab] = useState<"dashboard" | "raw">("dashboard");
 
   useEffect(() => {
@@ -43,9 +54,11 @@ function DashboardPage() {
   }, [authLoading, session, navigate]);
 
   const quiz = useQuizSubmissions(filters, session);
+  const allQuiz = useQuizSubmissions(EMPTY_FILTERS, session);
   const raffle = useRaffleEntries({ from: filters.from, to: filters.to }, session);
 
   const submissions = quiz.data ?? [];
+  const allSubmissions = allQuiz.data ?? [];
   const entries = raffle.data ?? [];
 
   const kpis = useMemo(() => {
@@ -115,7 +128,7 @@ function DashboardPage() {
 
           {/* Filters apply to both tabs */}
           <div className="mt-4">
-            <FiltersBar filters={filters} onChange={setFilters} submissions={submissions} />
+            <FiltersBar filters={filters} onChange={setFilters} submissions={submissions} allSubmissions={allSubmissions} />
           </div>
 
           {error ? (

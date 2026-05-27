@@ -5,7 +5,6 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from "recharts";
 import { SectionCard } from "./SectionCard";
 
@@ -27,9 +26,24 @@ function buildData(values: (string | null)[]) {
     .sort((a, b) => b.value - a.value);
 }
 
-function DonutCard({ title, values }: DistProps) {
-  const data = useMemo(() => buildData(values), [values]);
+function DonutCard({ title, values, orderedKeys, orderedColors }: DistProps & { orderedKeys?: string[]; orderedColors?: string[] }) {
+  const data = useMemo(() => {
+    if (orderedKeys && orderedKeys.length) {
+      const counts = new Map<string, number>();
+      for (const v of values) {
+        const key = v ?? "Sin indicar";
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+      return orderedKeys.map((k) => ({ name: k, value: counts.get(k) ?? 0 }));
+    }
+    return buildData(values);
+  }, [values, orderedKeys]);
+
   const total = data.reduce((s, d) => s + d.value, 0);
+  const legendItems = data.map((item, i) => ({
+    name: item.name,
+    color: orderedColors?.[i] ?? COLORS[i % COLORS.length],
+  }));
 
   return (
     <SectionCard title={title}>
@@ -38,7 +52,8 @@ function DonutCard({ title, values }: DistProps) {
           Sin datos
         </div>
       ) : (
-        <div className="h-64 w-full">
+        <div className="space-y-3">
+          <div className="h-52 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -50,16 +65,54 @@ function DonutCard({ title, values }: DistProps) {
                 paddingAngle={2}
               >
                 {data.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  <Cell
+                    key={i}
+                    fill={
+                      orderedColors && orderedColors[i]
+                        ? orderedColors[i]
+                        : COLORS[i % COLORS.length]
+                    }
+                  />
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }}
-                formatter={(v: number) => [`${v} (${((v / total) * 100).toFixed(1)}%)`, "Total"]}
+                cursor={{ fill: "rgba(255,255,255,0.08)" }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const value = Number(payload[0]?.value ?? 0);
+                  const pct = total ? ((value / total) * 100).toFixed(1) : "0.0";
+                  const category =
+                    String(payload[0]?.name ?? payload[0]?.payload?.name ?? label ?? "Sin indicar");
+                  const color = String(payload[0]?.color ?? payload[0]?.payload?.fill ?? "#ff6b35");
+
+                  return (
+                    <div className="rounded-xl border border-border bg-background px-3 py-2 text-xs shadow-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
+                        <p className="font-medium text-foreground">{category}</p>
+                      </div>
+                      <p className="mt-1 text-muted-foreground">{`${value} · ${pct}%`}</p>
+                    </div>
+                  );
+                }}
               />
-              <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
             </PieChart>
           </ResponsiveContainer>
+          </div>
+
+          <div className="max-h-28 overflow-y-auto pr-1">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] leading-4 text-muted-foreground">
+              {legendItems.map((item) => (
+                <div key={item.name} className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="truncate">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </SectionCard>
@@ -86,10 +139,17 @@ export function ProfileCharts({ generos, edades, centros }: Props) {
   };
 
   const edadesRanges = edades.map(mapAgeToRange);
+  const ageOrder = ["Sin indicar", "16-18", "18-21", "21-25", "25-35", "+35"];
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <DonutCard title="Distribución por género" values={generos} />
-      <DonutCard title="Distribución por edad" values={edadesRanges} />
+      <DonutCard
+        title="Distribución por edad"
+        values={edadesRanges}
+        orderedKeys={ageOrder}
+        orderedColors={["#e5e7eb", "#ff6b35", "#ff8f5c", "#f472b6", "#60a5fa", "#3b82f6"]}
+      />
       <DonutCard title="Distribución por centro" values={centros} />
     </div>
   );

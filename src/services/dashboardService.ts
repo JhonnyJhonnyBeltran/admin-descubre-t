@@ -8,7 +8,28 @@ function applyFilters<T>(query: T, filters: DashboardFilters): T {
   if (filters.to) q = q.lte("created_at", `${filters.to}T23:59:59Z`);
   if (filters.centro) q = q.eq("centro", filters.centro);
   if (filters.genero) q = q.eq("genero", filters.genero);
-  if (filters.edad) q = q.eq("edad", filters.edad);
+  if (filters.edad) {
+    // soportar rangos como '16-18', '+35' o 'Sin indicar'
+    const age = filters.edad;
+    if (age === "Sin indicar") {
+      q = q.is("edad", null);
+    } else if (age.startsWith("+")) {
+      const min = Number(age.slice(1));
+      if (!Number.isNaN(min)) q = q.gte("edad", min);
+      else q = q.eq("edad", filters.edad);
+    } else if (/^\d+-\d+$/.test(age)) {
+      const [lowStr, highStr] = age.split("-");
+      const low = Number(lowStr);
+      const high = Number(highStr);
+      if (!Number.isNaN(low) && !Number.isNaN(high)) {
+        q = q.gte("edad", low).lte("edad", high);
+      } else {
+        q = q.eq("edad", filters.edad);
+      }
+    } else {
+      q = q.eq("edad", filters.edad);
+    }
+  }
   if (filters.main_result) q = q.eq("main_result", filters.main_result);
   return q as T;
 }
