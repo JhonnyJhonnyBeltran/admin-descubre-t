@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { format, startOfDay, startOfWeek } from "date-fns";
+import { format, startOfDay, startOfWeek, addDays, addWeeks } from "date-fns";
 import { es } from "date-fns/locale";
 import { SectionCard } from "./SectionCard";
 
@@ -18,28 +18,60 @@ interface Props {
   dates: string[]; // ISO datetimes
   color?: "orange" | "blue";
   allowWeekly?: boolean;
+  from?: string | null; // ISO date yyyy-mm-dd
+  to?: string | null;
 }
 
-export function ActivityChart({ title, description, dates, color = "orange", allowWeekly = true }: Props) {
+export function ActivityChart({ title, description, dates, color = "orange", allowWeekly = true, from, to }: Props) {
   const [granularity, setGranularity] = useState<"day" | "week">("day");
 
   const data = useMemo(() => {
+    // parse and count
     const counts = new Map<string, number>();
+    const parsed: Date[] = [];
     for (const iso of dates) {
       const d = new Date(iso);
-      const bucket =
-        granularity === "day" ? startOfDay(d) : startOfWeek(d, { weekStartsOn: 1 });
+      if (Number.isNaN(d.getTime())) continue;
+      const bucket = granularity === "day" ? startOfDay(d) : startOfWeek(d, { weekStartsOn: 1 });
       const key = bucket.toISOString();
       counts.set(key, (counts.get(key) ?? 0) + 1);
+      parsed.push(d);
     }
-    return Array.from(counts.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([key, value]) => ({
+
+    // determine range using provided from/to or parsed dates
+    let start: Date | null = null;
+    let end: Date | null = null;
+
+    if (from) {
+      const f = new Date(from);
+      if (!Number.isNaN(f.getTime())) start = granularity === "day" ? startOfDay(f) : startOfWeek(f, { weekStartsOn: 1 });
+    }
+    if (to) {
+      const t = new Date(to);
+      if (!Number.isNaN(t.getTime())) end = granularity === "day" ? startOfDay(t) : startOfWeek(t, { weekStartsOn: 1 });
+    }
+
+    if (parsed.length && start === null) start = granularity === "day" ? startOfDay(new Date(Math.min(...parsed.map((d) => d.getTime())))) : startOfWeek(new Date(Math.min(...parsed.map((d) => d.getTime()))), { weekStartsOn: 1 });
+    if (parsed.length && end === null) end = granularity === "day" ? startOfDay(new Date(Math.max(...parsed.map((d) => d.getTime())))) : startOfWeek(new Date(Math.max(...parsed.map((d) => d.getTime()))), { weekStartsOn: 1 });
+
+    if (start === null || end === null) return [];
+
+    // build full series between start and end
+    const series: { date: string; label: string; value: number }[] = [];
+    let cursor = new Date(start);
+    while (cursor.getTime() <= end.getTime()) {
+      const key = cursor.toISOString();
+      const value = counts.get(key) ?? 0;
+      series.push({
         date: key,
         label: format(new Date(key), granularity === "day" ? "d MMM" : "'Sem.' w", { locale: es }),
         value,
-      }));
-  }, [dates, granularity]);
+      });
+      cursor = granularity === "day" ? addDays(cursor, 1) : addWeeks(cursor, 1);
+    }
+
+    return series;
+  }, [dates, granularity, from, to]);
 
   const stroke = color === "orange" ? "#ff6b35" : "#3b82f6";
   const fillId = `gradient-${color}`;

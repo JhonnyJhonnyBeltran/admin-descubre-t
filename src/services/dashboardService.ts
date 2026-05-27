@@ -13,9 +13,7 @@ function applyFilters<T>(query: T, filters: DashboardFilters): T {
   return q as T;
 }
 
-export async function fetchQuizSubmissions(
-  filters: DashboardFilters,
-): Promise<QuizSubmission[]> {
+export async function fetchQuizSubmissions(filters: DashboardFilters): Promise<QuizSubmission[]> {
   const base = supabase
     .from("quiz_submissions")
     .select(

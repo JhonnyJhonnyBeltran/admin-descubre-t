@@ -1,102 +1,71 @@
 import { useMemo } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
 import { SectionCard } from "./SectionCard";
 
 interface Props {
   title: string;
   description?: string;
   values: (string | null)[];
-  topN?: number;
   color?: "orange" | "blue" | "mix";
-  horizontal?: boolean;
 }
 
-const PALETTE = ["#ff6b35", "#ff8f5c", "#3b82f6", "#60a5fa", "#ffb088", "#93c5fd", "#fcd34d", "#34d399"];
+const ORANGE = "#ff6b35";
+const BLUE = "#3b82f6";
+const MIX_COLORS = ["#ff6b35", "#3b82f6", "#ff8f5c", "#60a5fa", "#f472b6"];
 
-export function ResultsChart({
-  title,
-  description,
-  values,
-  topN = 8,
-  color = "mix",
-  horizontal = true,
-}: Props) {
-  const data = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const v of values) {
-      if (!v) continue;
-      counts.set(v, (counts.get(v) ?? 0) + 1);
-    }
-    return Array.from(counts.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, topN);
-  }, [values, topN]);
+function buildCounts(values: (string | null)[]) {
+  const map = new Map<string, number>();
+  for (const v of values) {
+    const key = v ?? "Sin indicar";
+    map.set(key, (map.get(key) ?? 0) + 1);
+  }
+  const arr = Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  arr.sort((a, b) => b.value - a.value);
+  return arr;
+}
+
+export function ResultsChart({ title, description, values, color = "orange" }: Props) {
+  const data = useMemo(() => buildCounts(values), [values]);
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const top = data.slice(0, 5);
+
+  const barColor = (idx: number) => {
+    if (color === "orange") return ORANGE;
+    if (color === "blue") return BLUE;
+    return MIX_COLORS[idx % MIX_COLORS.length];
+  };
 
   return (
     <SectionCard title={title} description={description}>
-      {data.length === 0 ? (
-        <div className="flex h-56 items-center justify-center rounded-2xl bg-muted/40 text-sm text-muted-foreground">
-          Sin datos disponibles
+      {total === 0 ? (
+        <div className="flex h-44 items-center justify-center rounded-2xl bg-muted/40 text-sm text-muted-foreground">
+          Sin datos en el rango seleccionado
         </div>
       ) : (
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              layout={horizontal ? "vertical" : "horizontal"}
-              margin={{ top: 4, right: 16, left: horizontal ? 0 : -16, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef0f3" horizontal={!horizontal} vertical={horizontal} />
-              {horizontal ? (
-                <>
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "#6b7280" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    tick={{ fontSize: 11, fill: "#374151" }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={120}
-                  />
-                </>
-              ) : (
-                <>
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#374151" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                </>
-              )}
-              <Tooltip
-                cursor={{ fill: "rgba(255,107,53,0.06)" }}
-                contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }}
-              />
-              <Bar dataKey="value" radius={[8, 8, 8, 8]}>
-                {data.map((_, i) => (
-                  <Cell
-                    key={i}
-                    fill={
-                      color === "orange"
-                        ? "#ff6b35"
-                        : color === "blue"
-                          ? "#3b82f6"
-                          : PALETTE[i % PALETTE.length]
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="space-y-3">
+          {top.map((row, idx) => {
+            const pct = Math.round((row.value / total) * 100);
+            return (
+              <div key={row.name} className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="truncate text-sm font-medium text-foreground">{row.name}</p>
+                    <p className="ml-3 text-xs text-muted-foreground">{row.value}</p>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-2 rounded-full"
+                      style={{ width: `${pct}%`, background: barColor(idx) }}
+                    />
+                  </div>
+                </div>
+                <div className="w-12 text-right text-xs text-muted-foreground">{pct}%</div>
+              </div>
+            );
+          })}
         </div>
       )}
     </SectionCard>
   );
 }
+
+export default ResultsChart;

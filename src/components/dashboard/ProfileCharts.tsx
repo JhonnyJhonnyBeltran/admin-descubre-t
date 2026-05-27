@@ -73,10 +73,23 @@ interface Props {
 }
 
 export function ProfileCharts({ generos, edades, centros }: Props) {
+  const mapAgeToRange = (ageRaw: string | null) => {
+    if (!ageRaw) return "Sin indicar";
+    const n = Number(ageRaw);
+    if (Number.isNaN(n)) return "Sin indicar";
+    if (n >= 16 && n <= 18) return "16-18";
+    if (n > 18 && n <= 21) return "18-21";
+    if (n > 21 && n <= 25) return "21-25";
+    if (n > 25 && n <= 35) return "25-35";
+    if (n > 35) return "+35";
+    return "Sin indicar";
+  };
+
+  const edadesRanges = edades.map(mapAgeToRange);
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <DonutCard title="Distribución por género" values={generos} />
-      <DonutCard title="Distribución por edad" values={edades} />
+      <DonutCard title="Distribución por edad" values={edadesRanges} />
       <DonutCard title="Distribución por centro" values={centros} />
     </div>
   );

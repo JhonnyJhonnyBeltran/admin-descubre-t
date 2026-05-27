@@ -35,7 +35,6 @@ export function RecentSubmissionsTable({ submissions, limit = 20 }: Props) {
                 <Th>2º</Th>
                 <Th>3º</Th>
                 <Th>Duración</Th>
-                <Th>Informe</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -59,20 +58,6 @@ export function RecentSubmissionsTable({ submissions, limit = 20 }: Props) {
                   <Td className="text-muted-foreground">{s.result_2 ?? "—"}</Td>
                   <Td className="text-muted-foreground">{s.result_3 ?? "—"}</Td>
                   <Td>{formatDuration(s.duration_seconds)}</Td>
-                  <Td>
-                    {s.report_url ? (
-                      <a
-                        href={s.report_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline"
-                      >
-                        Ver <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </Td>
                 </tr>
               ))}
             </tbody>

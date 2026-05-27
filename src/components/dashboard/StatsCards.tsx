@@ -14,7 +14,7 @@ export function KpiCard({ label, value, hint, icon, accent = "soft", loading }: 
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)]",
+        "group relative overflow-hidden rounded-3xl border border-border bg-card p-4 sm:p-5 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)]",
       )}
     >
       <div
@@ -37,18 +37,18 @@ export function KpiCard({ label, value, hint, icon, accent = "soft", loading }: 
           {loading ? (
             <div className="mt-3 h-8 w-24 animate-pulse rounded-md bg-muted" />
           ) : (
-            <p className="mt-2 truncate text-3xl font-bold tracking-tight text-foreground">
+            <p className="mt-2 text-2xl sm:text-xl font-bold tracking-tight text-foreground leading-tight">
               {value}
             </p>
           )}
           {hint && (
-            <p className="mt-1 truncate text-xs text-muted-foreground">{hint}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
           )}
         </div>
         {icon && (
           <div
             className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
+              "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl",
               accent === "orange" && "bg-orange-50 text-orange-600",
               accent === "blue" && "bg-blue-50 text-blue-600",
               accent === "soft" && "bg-muted text-foreground",
@@ -68,7 +68,10 @@ interface StatsCardsProps {
 
 export function StatsCards({ children }: StatsCardsProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div
+      className="grid gap-4"
+      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
+    >
       {children}
     </div>
   );

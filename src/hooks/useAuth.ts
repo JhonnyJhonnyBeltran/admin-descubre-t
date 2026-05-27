@@ -1,31 +1,55 @@
-import { useState } from "react";
-
-const AUTH_KEY = "cpifp_admin_auth";
+import { useEffect, useState } from "react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 export function useAuth() {
-  const [session, setSession] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(AUTH_KEY) === "1";
-  });
+  const [session, setSession] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<User | null>(null);
 
-  function signIn(username: string, password: string): boolean {
-    if (username.trim() === "cpifp" && password.trim() === "cpifparenal") {
-      localStorage.setItem(AUTH_KEY, "1");
-      setSession(true);
-      return true;
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setLoading(false);
+      return;
     }
-    return false;
+
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      const s = data.session;
+      setSession(Boolean(s));
+      setUser(s?.user ?? null);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(Boolean(session));
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      // unsubscribe listener when available
+      listener?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  async function signIn(email: string, password: string): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return error ? false : true;
   }
 
-  function signOut() {
-    localStorage.removeItem(AUTH_KEY);
+  async function signOut() {
+    await supabase.auth.signOut();
     setSession(false);
+    setUser(null);
   }
 
   return {
     session,
-    loading: false,
-    user: session ? { username: "cpifp" } : null,
+    loading,
+    user,
     signIn,
     signOut,
   };

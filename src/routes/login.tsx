@@ -22,16 +22,21 @@ function LoginPage() {
     if (session) navigate({ to: "/dashboard", replace: true });
   }, [session, navigate]);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const ok = signIn(username, password);
-    setLoading(false);
-    if (!ok) {
-      setError("Usuario o contraseña incorrectos.");
-    } else {
-      navigate({ to: "/dashboard", replace: true });
+    try {
+      const ok = await signIn(username, password);
+      setLoading(false);
+      if (!ok) {
+        setError("Usuario o contraseña incorrectos.");
+      } else {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    } catch (err) {
+      setLoading(false);
+      setError("Error al iniciar sesión.");
     }
   }
 

@@ -1,13 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Users,
-  Ticket,
-  Timer,
-  Trophy,
-  Building2,
-  Layers,
-} from "lucide-react";
+import { Users, Ticket, Timer, Trophy, Building2, Layers } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { FiltersBar } from "@/components/dashboard/FiltersBar";
 import { StatsCards, KpiCard } from "@/components/dashboard/StatsCards";
@@ -61,9 +54,7 @@ function DashboardPage() {
     const durations = submissions
       .map((s) => s.duration_seconds)
       .filter((d): d is number => typeof d === "number" && d > 0);
-    const avg = durations.length
-      ? durations.reduce((a, b) => a + b, 0) / durations.length
-      : null;
+    const avg = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : null;
     const min = durations.length ? Math.min(...durations) : null;
     const max = durations.length ? Math.max(...durations) : null;
 
@@ -95,10 +86,7 @@ function DashboardPage() {
 
   if (authLoading || !session) {
     return (
-      <div
-        className="min-h-screen p-4 md:p-8"
-        style={{ background: "var(--gradient-soft)" }}
-      >
+      <div className="min-h-screen p-4 md:p-8" style={{ background: "var(--gradient-soft)" }}>
         <DashboardSkeleton />
       </div>
     );
@@ -108,10 +96,7 @@ function DashboardPage() {
   const error = quiz.error || raffle.error;
 
   return (
-    <div
-      className="min-h-screen p-4 md:p-8"
-      style={{ background: "var(--gradient-soft)" }}
-    >
+    <div className="min-h-screen p-4 md:p-8" style={{ background: "var(--gradient-soft)" }}>
       <div className="mx-auto max-w-7xl space-y-6">
         <DashboardHeader
           username={user?.username}
@@ -122,10 +107,7 @@ function DashboardPage() {
         />
 
         {/* Main tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "dashboard" | "raw")}
-        >
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "dashboard" | "raw")}>
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="raw">Datos crudos</TabsTrigger>
@@ -133,11 +115,7 @@ function DashboardPage() {
 
           {/* Filters apply to both tabs */}
           <div className="mt-4">
-            <FiltersBar
-              filters={filters}
-              onChange={setFilters}
-              submissions={submissions}
-            />
+            <FiltersBar filters={filters} onChange={setFilters} submissions={submissions} />
           </div>
 
           {error ? (
@@ -191,12 +169,6 @@ function DashboardPage() {
                     icon={<Building2 className="h-5 w-5" />}
                     accent="blue"
                   />
-                  <KpiCard
-                    label="Con 2º / 3º resultado"
-                    value={`${formatPercent(kpis.pctSecond)} · ${formatPercent(kpis.pctThird)}`}
-                    hint="% del total"
-                    icon={<Layers className="h-5 w-5" />}
-                  />
                 </StatsCards>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -204,30 +176,34 @@ function DashboardPage() {
                     title="Cuestionarios completados"
                     description="Evolución de envíos en el tiempo"
                     dates={submissions.map((s) => s.created_at)}
+                    from={filters.from}
+                    to={filters.to}
                     color="orange"
                   />
                   <ActivityChart
                     title="Inscripciones al sorteo"
                     description="Evolución de participantes"
                     dates={entries.map((e) => e.created_at)}
+                    from={filters.from}
+                    to={filters.to}
                     color="blue"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                   <ResultsChart
-                    title="Ranking · resultado principal"
-                    description="Top 8 vocaciones"
+                    title="Top 5 Mejores Resultados"
+                    description="Top 5 vocaciones"
                     values={submissions.map((s) => s.main_result)}
                     color="orange"
                   />
                   <ResultsChart
-                    title="Ranking · 2º resultado"
+                    title="Top 5 Segundos Resultados"
                     values={submissions.map((s) => s.result_2)}
                     color="blue"
                   />
                   <ResultsChart
-                    title="Ranking · 3º resultado"
+                    title="Top 5 Terceros Resultados"
                     values={submissions.map((s) => s.result_3)}
                     color="mix"
                   />
