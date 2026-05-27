@@ -206,17 +206,19 @@ function DashboardPage() {
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                   <ResultsChart
                     title="Top 5 Mejores Resultados"
-                    description="Top 5 vocaciones"
+                    description="Ciclos formativos más frecuentes como primera opción"
                     values={submissions.map((s) => s.main_result)}
                     color="orange"
                   />
                   <ResultsChart
                     title="Top 5 Segundos Resultados"
+                    description="Ciclos formativos más frecuentes como segunda opción"
                     values={submissions.map((s) => s.result_2)}
                     color="blue"
                   />
                   <ResultsChart
                     title="Top 5 Terceros Resultados"
+                    description="Ciclos formativos más frecuentes como tercera opción"
                     values={submissions.map((s) => s.result_3)}
                     color="mix"
                   />
