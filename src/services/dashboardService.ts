@@ -53,7 +53,7 @@ export async function fetchRaffleEntries(
 ): Promise<RaffleEntry[]> {
   let q = supabase
     .from("raffle_entries")
-    .select("id, nombre_completo, email, created_at")
+    .select("id, nombre_completo, email, edad, created_at")
     .order("created_at", { ascending: false })
     .limit(5000);
   if (filters.from) q = q.gte("created_at", `${filters.from}T00:00:00Z`);

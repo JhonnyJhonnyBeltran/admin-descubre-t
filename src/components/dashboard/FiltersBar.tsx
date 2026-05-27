@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import type { DashboardFilters } from "@/types/dashboard";
 import type { QuizSubmission } from "@/types/dashboard";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Filter, X } from "lucide-react";
+import { Filter, X, CalendarIcon } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -15,6 +14,7 @@ import {
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface Props {
   filters: DashboardFilters;
@@ -82,23 +82,12 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              const to = new Date();
-              const from = new Date(to);
-              from.setMonth(from.getMonth() - 1);
-              const fmt = (d: Date) => d.toISOString().slice(0, 10);
-              onChange({
-                from: fmt(from),
-                to: fmt(to),
-                centro: null,
-                genero: null,
-                edad: null,
-                main_result: null,
-              });
-            }}
+            onClick={() =>
+              onChange({ from: null, to: null, centro: null, genero: null, edad: null, main_result: null })
+            }
           >
             <X className="mr-1 h-4 w-4" />
-            Limpiar
+            Limpiar todo
           </Button>
         )}
       </div>
@@ -109,7 +98,6 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
           <DatePicker
             value={filters.from}
             onChange={(v) => set("from", v)}
-            placeholder="Todas"
           />
         </div>
         <div>
@@ -117,7 +105,6 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
           <DatePicker
             value={filters.to}
             onChange={(v) => set("to", v)}
-            placeholder="Todas"
           />
         </div>
         <div>
@@ -189,31 +176,54 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
   );
 }
 
-function DatePicker({ value, onChange, placeholder }: { value: string | null; onChange: (v: string | null) => void; placeholder?: string }) {
+function DatePicker({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  onChange: (v: string | null) => void;
+}) {
   const [open, setOpen] = useState(false);
 
-  const parsed = value ? new Date(value) : null;
+  const parsed = value ? new Date(value + "T12:00:00") : null;
+  const todayFormatted = format(new Date(), "dd/MM/yyyy", { locale: es });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Input
-          readOnly
-          className="rounded-xl cursor-pointer"
-          value={parsed ? format(parsed, "dd/MM/yyyy") : ""}
-          placeholder={placeholder}
-        />
+        <button
+          type="button"
+          className={[
+            "flex h-10 w-full items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm shadow-sm transition-colors",
+            "hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring",
+            parsed ? "text-foreground" : "text-muted-foreground",
+          ].join(" ")}
+        >
+          <CalendarIcon className="h-3.5 w-3.5 shrink-0 opacity-60" />
+          <span className="flex-1 text-left">
+            {parsed ? format(parsed, "dd/MM/yyyy", { locale: es }) : todayFormatted}
+          </span>
+          {parsed && (
+            <X
+              className="h-3.5 w-3.5 shrink-0 opacity-60 hover:opacity-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(null);
+              }}
+            />
+          )}
+        </button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
           selected={parsed ?? undefined}
           onSelect={(d) => {
             if (!d) return;
-            const iso = format(d, "yyyy-MM-dd");
-            onChange(iso);
+            onChange(format(d, "yyyy-MM-dd"));
             setOpen(false);
           }}
+          initialFocus
         />
       </PopoverContent>
     </Popover>

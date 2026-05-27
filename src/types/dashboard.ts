@@ -19,6 +19,7 @@ export interface RaffleEntry {
   id: string;
   nombre_completo: string | null;
   email: string | null;
+  edad: string | null;
   created_at: string;
 }
 

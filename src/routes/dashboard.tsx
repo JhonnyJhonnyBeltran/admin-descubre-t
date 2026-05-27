@@ -35,18 +35,7 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardPage() {
   const navigate = useNavigate();
   const { session, loading: authLoading, signOut, user } = useAuth();
-  const getDefaultDateRange = (): Pick<DashboardFilters, 'from' | 'to'> => {
-    const to = new Date();
-    const from = new Date(to);
-    from.setMonth(from.getMonth() - 1);
-    const fmt = (d: Date) => d.toISOString().slice(0, 10);
-    return { from: fmt(from), to: fmt(to) };
-  };
-
-  const [filters, setFilters] = useState<DashboardFilters>({
-    ...EMPTY_FILTERS,
-    ...getDefaultDateRange(),
-  });
+  const [filters, setFilters] = useState<DashboardFilters>(EMPTY_FILTERS);
   const [activeTab, setActiveTab] = useState<"dashboard" | "raw">("dashboard");
 
   useEffect(() => {
@@ -230,7 +219,7 @@ function DashboardPage() {
                   centros={submissions.map((s) => s.centro)}
                 />
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
                   <div className="lg:col-span-2">
                     <RecentSubmissionsTable submissions={submissions} />
                   </div>
