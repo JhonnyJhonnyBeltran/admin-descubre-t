@@ -42,7 +42,6 @@ export function mockQuizSubmissions(): QuizSubmission[] {
       genero: pick(GENEROS),
       edad: pick(EDADES),
       duration_seconds: Math.floor(120 + Math.random() * 600),
-      report_url: Math.random() > 0.4 ? "https://example.com/report.pdf" : null,
       metadata: null,
       created_at: created.toISOString(),
     });

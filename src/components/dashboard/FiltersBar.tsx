@@ -34,16 +34,16 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
     if (!ageRaw) return "Sin indicar";
     const n = Number(ageRaw);
     if (n >= 16 && n <= 18) return "16-18";
-    if (n > 18 && n <= 21) return "18-21";
-    if (n > 21 && n <= 25) return "21-25";
-    if (n > 25 && n <= 35) return "25-35";
+    if (n > 18 && n <= 21) return "19-21";
+    if (n > 21 && n <= 25) return "22-25";
+    if (n > 25 && n <= 35) return "26-35";
     if (n > 35) return "+35";
     return "Sin indicar";
   };
 
   const options = useMemo(
     () => {
-      const order = ["16-18", "18-21", "21-25", "25-35", "+35"];
+      const order = ["16-18", "19-21", "22-25", "26-35", "+35"];
       const edadesRaw = uniq(source.map((s) => mapAgeToRange(s.edad)));
       edadesRaw.sort((a, b) => {
         const ia = order.indexOf(a);

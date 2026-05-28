@@ -10,7 +10,6 @@ export interface QuizSubmission {
   genero: string | null;
   edad: string | null;
   duration_seconds: number | null;
-  report_url: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
 }

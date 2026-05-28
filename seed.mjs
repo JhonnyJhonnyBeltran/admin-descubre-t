@@ -92,7 +92,6 @@ function makeSubmission() {
     duration_seconds: Math.floor(90 + Math.random() * 720),
     questions: [],
     answers: [],
-    report_url: null,
     metadata: null,
     created_at: randomDate(90),   // últimos 90 días
   };

@@ -25,7 +25,9 @@ function PerfilesPage() {
   }, [authLoading, session, navigate]);
 
   const quiz = useQuizSubmissions(filters, session);
+  const allQuiz = useQuizSubmissions(EMPTY_FILTERS, session);
   const submissions = quiz.data ?? [];
+  const allSubmissions = allQuiz.data ?? [];
 
   const isLoading = quiz.isLoading;
   const error = quiz.error;
@@ -43,7 +45,7 @@ function PerfilesPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader title="Perfiles" subtitle="Distribución por género, edad y centro" />
         <div className="mt-0">
-          <FiltersBar filters={filters} onChange={setFilters} submissions={submissions} allSubmissions={[]} />
+          <FiltersBar filters={filters} onChange={setFilters} submissions={submissions} allSubmissions={allSubmissions} />
         </div>
 
         {error ? (
