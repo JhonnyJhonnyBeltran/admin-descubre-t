@@ -24,7 +24,7 @@ function csvRow(cells: (string | null | undefined)[]): string {
     .join(",");
 }
 
-function downloadCsv(filename: string, rows: string[][]): void {
+function downloadCsv(filename: string, rows: (string | null | undefined)[][]): void {
   const csv = rows.map(csvRow).join("\r\n");
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -47,34 +47,28 @@ function fmtDate(iso: string) {
 
 function QuizTable({ submissions }: { submissions: QuizSubmission[] }) {
   const QUIZ_HEADERS = [
-    "Fecha",
     "Centro",
     "Género",
     "Edad",
     "Resultado 1",
     "Resultado 2",
     "Resultado 3",
-    "Duración (s)",
-    "Informe",
-    "quiz_id",
-    "id",
+    "Fecha",
+    "Duración (s)"
   ];
 
   function exportQuiz() {
-    const rows: string[][] = [
+    const rows: (string | null)[][] = [
       QUIZ_HEADERS,
       ...submissions.map((s) => [
-        fmtDate(s.created_at),
         s.centro,
         s.genero,
         s.edad,
         s.main_result,
         s.result_2,
         s.result_3,
+        fmtDate(s.created_at),
         s.duration_seconds != null ? String(s.duration_seconds) : null,
-        s.report_url,
-        s.quiz_id,
-        s.id,
       ]),
     ];
     downloadCsv(`cuestionarios_${Date.now()}.csv`, rows);
@@ -114,30 +108,14 @@ function QuizTable({ submissions }: { submissions: QuizSubmission[] }) {
             ) : (
               submissions.map((s) => (
                 <tr key={s.id} className="hover:bg-muted/40 transition-colors">
-                  <Td>{fmtDate(s.created_at)}</Td>
                   <Td>{s.centro ?? "—"}</Td>
                   <Td>{s.genero ?? "—"}</Td>
                   <Td>{s.edad ?? "—"}</Td>
                   <Td bold>{s.main_result ?? "—"}</Td>
                   <Td>{s.result_2 ?? "—"}</Td>
                   <Td>{s.result_3 ?? "—"}</Td>
+                  <Td>{fmtDate(s.created_at)}</Td>
                   <Td mono>{s.duration_seconds != null ? formatDuration(s.duration_seconds) : "—"}</Td>
-                  <Td>
-                    {s.report_url ? (
-                      <a
-                        href={s.report_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 underline underline-offset-2"
-                      >
-                        Ver
-                      </a>
-                    ) : (
-                      "—"
-                    )}
-                  </Td>
-                  <Td mono>{s.quiz_id ?? "—"}</Td>
-                  <Td mono muted>{s.id}</Td>
                 </tr>
               ))
             )}
@@ -151,12 +129,12 @@ function QuizTable({ submissions }: { submissions: QuizSubmission[] }) {
 /* ─── Raffle table ──────────────────────────────────────────────── */
 
 function RaffleTable({ entries }: { entries: RaffleEntry[] }) {
-  const RAFFLE_HEADERS = ["Fecha", "Nombre", "Email", "id"];
+  const RAFFLE_HEADERS = ["Nombre", "Edad", "Email", "Fecha"];
 
   function exportRaffle() {
-    const rows: string[][] = [
+    const rows: (string | null)[][] = [
       RAFFLE_HEADERS,
-      ...entries.map((e) => [fmtDate(e.created_at), e.nombre_completo, e.email, e.id]),
+      ...entries.map((e) => [e.nombre_completo, e.edad, e.email, fmtDate(e.created_at)]),
     ];
     downloadCsv(`sorteo_${Date.now()}.csv`, rows);
   }
@@ -195,10 +173,10 @@ function RaffleTable({ entries }: { entries: RaffleEntry[] }) {
             ) : (
               entries.map((e) => (
                 <tr key={e.id} className="hover:bg-muted/40 transition-colors">
-                  <Td>{fmtDate(e.created_at)}</Td>
                   <Td bold>{e.nombre_completo ?? "—"}</Td>
+                  <Td mono>{e.edad ?? "—"}</Td>
                   <Td>{e.email ?? "—"}</Td>
-                  <Td mono muted>{e.id}</Td>
+                  <Td>{fmtDate(e.created_at)}</Td>
                 </tr>
               ))
             )}
@@ -216,18 +194,6 @@ export function RawDataTable({ submissions, entries }: Props) {
 
   return (
     <div className="rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
-      <div className="mb-4 flex items-center gap-3">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-sm"
-          style={{ background: "var(--gradient-brand)" }}
-        >
-          <Table2 className="h-5 w-5" />
-        </div>
-        <div>
-          <h2 className="text-base font-bold text-foreground">Datos crudos</h2>
-          <p className="text-xs text-muted-foreground">Todos los registros tal cual están en la base de datos</p>
-        </div>
-      </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "quiz" | "raffle")}>
         <TabsList className="mb-4">

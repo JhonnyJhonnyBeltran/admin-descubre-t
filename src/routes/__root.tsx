@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { Navbar } from "@/components/ui/navbar";
+import { FilterProvider } from "@/contexts/FilterContext";
 
 function NotFoundComponent() {
   return (
@@ -113,7 +115,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <FilterProvider>
+        <Navbar />
+        <Outlet />
+      </FilterProvider>
     </QueryClientProvider>
   );
 }

@@ -17,14 +17,14 @@ export function SectionCard({ title, description, action, children, className }:
         className,
       )}
     >
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-base font-semibold text-foreground md:text-lg">{title}</h2>
           {description && (
             <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">{description}</p>
           )}
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        {action && <div className="shrink-0 sm:self-start">{action}</div>}
       </div>
       {children}
     </section>

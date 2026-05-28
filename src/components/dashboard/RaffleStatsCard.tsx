@@ -47,15 +47,6 @@ export function RaffleStatsCard({ entries }: Props) {
             ))}
           </ul>
         )}
-
-        <Link
-          to="/sorteo"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-        >
-          <Ticket className="h-4 w-4" />
-          Generar sorteo
-          <ArrowRight className="h-4 w-4" />
-        </Link>
       </div>
     </SectionCard>
   );

@@ -8,6 +8,7 @@ import { useRaffleEntries } from "@/hooks/useDashboardData";
 import { EMPTY_FILTERS } from "@/types/dashboard";
 import type { RaffleEntry } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/dashboard/DashboardHeader";
 
 export const Route = createFileRoute("/sorteo")({
   head: () => ({
@@ -135,22 +136,7 @@ function SorteoPage() {
     <div className="min-h-screen p-4 md:p-8" style={{ background: "var(--gradient-soft)" }}>
       <div className="mx-auto max-w-5xl space-y-6">
 
-        {/* ── Header ── */}
-        <div className="flex items-center gap-4">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Volver
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Sorteo de participantes</h1>
-            <p className="text-sm text-muted-foreground">
-              {entries.length} inscritos · selección aleatoria
-            </p>
-          </div>
-        </div>
+        <PageHeader title="Sorteo de participantes" subtitle={`${entries.length} inscritos · selección aleatoria`} />
 
         {/* ── Ganador ── */}
         {winner && (

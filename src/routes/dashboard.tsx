@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Users, Ticket, Timer, Trophy, Building2, Layers } from "lucide-react";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import PageHeader from "@/components/dashboard/DashboardHeader";
 import { FiltersBar } from "@/components/dashboard/FiltersBar";
 import { StatsCards, KpiCard } from "@/components/dashboard/StatsCards";
 import { ActivityChart } from "@/components/dashboard/ActivityChart";
@@ -13,6 +13,7 @@ import { RawDataTable } from "@/components/dashboard/RawDataTable";
 import { DashboardSkeleton, ErrorState } from "@/components/dashboard/States";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuizSubmissions, useRaffleEntries } from "@/hooks/useDashboardData";
+import { useFilterContext } from "@/contexts/FilterContext";
 import { useAuth } from "@/hooks/useAuth";
 import { EMPTY_FILTERS, type DashboardFilters } from "@/types/dashboard";
 import { formatDuration, formatNumber, formatPercent } from "@/lib/format";
@@ -35,8 +36,26 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardPage() {
   const navigate = useNavigate();
   const { session, loading: authLoading, signOut, user } = useAuth();
-  const [filters, setFilters] = useState<DashboardFilters>(EMPTY_FILTERS);
+  const { filters, setFilters } = useFilterContext();
   const [activeTab, setActiveTab] = useState<"dashboard" | "raw">("dashboard");
+
+  useEffect(() => {
+    // Handle direct links with hash (e.g. /dashboard#ciclos, #perfiles, #datos)
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    if (hash) {
+      const h = hash.replace("#", "");
+      if (h === "datos" || h === "raw") {
+        setActiveTab("raw");
+      } else if (h === "dashboard") {
+        setActiveTab("dashboard");
+      }
+      // try scroll to section
+      setTimeout(() => {
+        const el = document.getElementById(h);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !session) navigate({ to: "/login", replace: true });
@@ -100,20 +119,10 @@ function DashboardPage() {
   return (
     <div className="min-h-screen p-4 md:p-8" style={{ background: "var(--gradient-soft)" }}>
       <div className="mx-auto max-w-7xl space-y-6">
-        <DashboardHeader
-          username={user?.username}
-          onSignOut={() => {
-            signOut();
-            navigate({ to: "/login" });
-          }}
-        />
+        <PageHeader title="Panel de estadísticas" subtitle="Resultados, perfiles y participación del cuestionario vocacional" />
 
         {/* Main tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "dashboard" | "raw")}>
-          <TabsList>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="raw">Datos crudos</TabsTrigger>
-          </TabsList>
 
           {/* Filters apply to both tabs */}
           <div className="mt-4">
@@ -134,6 +143,7 @@ function DashboardPage() {
             <>
               {/* ── Dashboard tab ── */}
               <TabsContent value="dashboard" className="space-y-6 mt-4">
+                <div id="inicio" />
                 <StatsCards>
                   <KpiCard
                     label="Cuestionarios"
@@ -213,11 +223,15 @@ function DashboardPage() {
                   />
                 </div>
 
+                <section id="ciclos" />
+
                 <ProfileCharts
                   generos={submissions.map((s) => s.genero)}
                   edades={submissions.map((s) => s.edad)}
                   centros={submissions.map((s) => s.centro)}
                 />
+
+                <section id="perfiles" />
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
                   <div className="lg:col-span-2">
@@ -229,6 +243,7 @@ function DashboardPage() {
 
               {/* ── Datos crudos tab ── */}
               <TabsContent value="raw" className="mt-4">
+                <div id="datos" />
                 <RawDataTable submissions={submissions} entries={entries} />
               </TabsContent>
             </>

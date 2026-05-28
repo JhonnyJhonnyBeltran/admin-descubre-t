@@ -10,8 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SorteoRouteImport } from './routes/sorteo'
+import { Route as PerfilesRouteImport } from './routes/perfiles'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DatosRouteImport } from './routes/datos'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CiclosRouteImport } from './routes/ciclos'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SorteoRoute = SorteoRouteImport.update({
@@ -19,14 +22,29 @@ const SorteoRoute = SorteoRouteImport.update({
   path: '/sorteo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PerfilesRoute = PerfilesRouteImport.update({
+  id: '/perfiles',
+  path: '/perfiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DatosRoute = DatosRouteImport.update({
+  id: '/datos',
+  path: '/datos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CiclosRoute = CiclosRouteImport.update({
+  id: '/ciclos',
+  path: '/ciclos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,35 +55,69 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ciclos': typeof CiclosRoute
   '/dashboard': typeof DashboardRoute
+  '/datos': typeof DatosRoute
   '/login': typeof LoginRoute
+  '/perfiles': typeof PerfilesRoute
   '/sorteo': typeof SorteoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ciclos': typeof CiclosRoute
   '/dashboard': typeof DashboardRoute
+  '/datos': typeof DatosRoute
   '/login': typeof LoginRoute
+  '/perfiles': typeof PerfilesRoute
   '/sorteo': typeof SorteoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ciclos': typeof CiclosRoute
   '/dashboard': typeof DashboardRoute
+  '/datos': typeof DatosRoute
   '/login': typeof LoginRoute
+  '/perfiles': typeof PerfilesRoute
   '/sorteo': typeof SorteoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/sorteo'
+  fullPaths:
+    | '/'
+    | '/ciclos'
+    | '/dashboard'
+    | '/datos'
+    | '/login'
+    | '/perfiles'
+    | '/sorteo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/sorteo'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/sorteo'
+  to:
+    | '/'
+    | '/ciclos'
+    | '/dashboard'
+    | '/datos'
+    | '/login'
+    | '/perfiles'
+    | '/sorteo'
+  id:
+    | '__root__'
+    | '/'
+    | '/ciclos'
+    | '/dashboard'
+    | '/datos'
+    | '/login'
+    | '/perfiles'
+    | '/sorteo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CiclosRoute: typeof CiclosRoute
   DashboardRoute: typeof DashboardRoute
+  DatosRoute: typeof DatosRoute
   LoginRoute: typeof LoginRoute
+  PerfilesRoute: typeof PerfilesRoute
   SorteoRoute: typeof SorteoRoute
 }
 
@@ -78,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SorteoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/perfiles': {
+      id: '/perfiles'
+      path: '/perfiles'
+      fullPath: '/perfiles'
+      preLoaderRoute: typeof PerfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -85,11 +144,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/datos': {
+      id: '/datos'
+      path: '/datos'
+      fullPath: '/datos'
+      preLoaderRoute: typeof DatosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ciclos': {
+      id: '/ciclos'
+      path: '/ciclos'
+      fullPath: '/ciclos'
+      preLoaderRoute: typeof CiclosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,8 +177,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CiclosRoute: CiclosRoute,
   DashboardRoute: DashboardRoute,
+  DatosRoute: DatosRoute,
   LoginRoute: LoginRoute,
+  PerfilesRoute: PerfilesRoute,
   SorteoRoute: SorteoRoute,
 }
 export const routeTree = rootRouteImport

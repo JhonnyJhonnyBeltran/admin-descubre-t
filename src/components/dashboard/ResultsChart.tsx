@@ -7,6 +7,7 @@ interface Props {
   description?: string;
   values: (string | null)[];
   color?: "orange" | "blue" | "mix";
+  showAction?: boolean;
 }
 
 const ORANGE = "#ff6b35";
@@ -24,7 +25,13 @@ function buildCounts(values: (string | null)[]) {
   return arr;
 }
 
-export function ResultsChart({ title, description, values, color = "orange" }: Props) {
+export function ResultsChart({
+  title,
+  description,
+  values,
+  color = "orange",
+  showAction = true,
+}: Props) {
   const data = useMemo(() => buildCounts(values), [values]);
   const total = data.reduce((s, d) => s + d.value, 0);
   const top = data.slice(0, 5);
@@ -41,11 +48,13 @@ export function ResultsChart({ title, description, values, color = "orange" }: P
         title={title}
         description={description}
         action={
-          <DialogTrigger asChild>
-            <button className="rounded-md px-3 py-1 text-sm font-medium text-primary hover:underline">
-              Ver todo
-            </button>
-          </DialogTrigger>
+          showAction ? (
+            <DialogTrigger asChild>
+              <button className="rounded-md px-3 py-1 text-sm font-medium text-primary hover:underline">
+                Ver todo
+              </button>
+            </DialogTrigger>
+          ) : undefined
         }
       >
       {total === 0 ? (
