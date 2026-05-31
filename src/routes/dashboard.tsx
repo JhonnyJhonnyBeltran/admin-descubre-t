@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Users, Ticket, Timer, Trophy, Building2, Layers } from "lucide-react";
+import { Users, Ticket, Timer, Trophy, Building2, Smile } from "lucide-react";
 import PageHeader from "@/components/dashboard/DashboardHeader";
 import { FiltersBar } from "@/components/dashboard/FiltersBar";
 import { StatsCards, KpiCard } from "@/components/dashboard/StatsCards";
@@ -91,6 +91,8 @@ function DashboardPage() {
 
     const withSecond = submissions.filter((s) => s.result_2).length;
     const withThird = submissions.filter((s) => s.result_3).length;
+    const answered = submissions.filter((s) => s.satisfied !== null && s.satisfied !== undefined);
+    const satisfied = answered.filter((s) => s.satisfied).length;
 
     return {
       total,
@@ -102,6 +104,8 @@ function DashboardPage() {
       topCentro: counts("centro"),
       pctSecond: total ? withSecond / total : 0,
       pctThird: total ? withThird / total : 0,
+      satisfiedTotal: answered.length,
+      satisfiedPct: answered.length ? satisfied / answered.length : null,
     };
   }, [submissions, entries]);
 
@@ -153,11 +157,15 @@ function DashboardPage() {
                     accent="orange"
                   />
                   <KpiCard
-                    label="Sorteo"
-                    value={formatNumber(kpis.totalRaffle)}
-                    hint="Inscripciones"
-                    icon={<Ticket className="h-5 w-5" />}
-                    accent="blue"
+                    label="Satisfaccion"
+                    value={kpis.satisfiedPct == null ? "—" : formatPercent(kpis.satisfiedPct)}
+                    hint={
+                      kpis.satisfiedTotal
+                        ? `${formatNumber(kpis.satisfiedTotal)} respuestas`
+                        : "Sin respuestas"
+                    }
+                    icon={<Smile className="h-5 w-5" />}
+                    accent="orange"
                   />
                   <KpiCard
                     label="Duración media"

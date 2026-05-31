@@ -6,6 +6,7 @@ export interface QuizSubmission {
   main_result: string | null;
   result_2: string | null;
   result_3: string | null;
+  satisfied: boolean | null;
   centro: string | null;
   genero: string | null;
   edad: string | null;

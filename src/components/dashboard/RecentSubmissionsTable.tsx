@@ -34,6 +34,7 @@ export function RecentSubmissionsTable({ submissions, limit = 20 }: Props) {
                 <Th>Resultado</Th>
                 <Th>2º</Th>
                 <Th>3º</Th>
+                <Th>Satisfecho</Th>
                 <Th>Duración</Th>
               </tr>
             </thead>
@@ -57,6 +58,7 @@ export function RecentSubmissionsTable({ submissions, limit = 20 }: Props) {
                   </Td>
                   <Td className="text-muted-foreground">{s.result_2 ?? "—"}</Td>
                   <Td className="text-muted-foreground">{s.result_3 ?? "—"}</Td>
+                  <Td className="text-muted-foreground">{s.satisfied == null ? "—" : s.satisfied ? "Si" : "No"}</Td>
                   <Td>{formatDuration(s.duration_seconds)}</Td>
                 </tr>
               ))}

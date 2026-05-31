@@ -53,6 +53,7 @@ function QuizTable({ submissions }: { submissions: QuizSubmission[] }) {
     "Resultado 1",
     "Resultado 2",
     "Resultado 3",
+    "Satisfecho",
     "Fecha",
     "Duración (s)"
   ];
@@ -67,6 +68,7 @@ function QuizTable({ submissions }: { submissions: QuizSubmission[] }) {
         s.main_result,
         s.result_2,
         s.result_3,
+        s.satisfied == null ? null : s.satisfied ? "Si" : "No",
         fmtDate(s.created_at),
         s.duration_seconds != null ? String(s.duration_seconds) : null,
       ]),
@@ -114,6 +116,7 @@ function QuizTable({ submissions }: { submissions: QuizSubmission[] }) {
                   <Td bold>{s.main_result ?? "—"}</Td>
                   <Td>{s.result_2 ?? "—"}</Td>
                   <Td>{s.result_3 ?? "—"}</Td>
+                  <Td>{s.satisfied == null ? "—" : s.satisfied ? "Si" : "No"}</Td>
                   <Td>{fmtDate(s.created_at)}</Td>
                   <Td mono>{s.duration_seconds != null ? formatDuration(s.duration_seconds) : "—"}</Td>
                 </tr>

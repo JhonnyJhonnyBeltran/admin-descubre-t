@@ -38,7 +38,7 @@ export async function fetchQuizSubmissions(filters: DashboardFilters): Promise<Q
   const base = supabase
     .from("quiz_submissions")
     .select(
-      "id, quiz_id, main_result, result_2, result_3, centro, genero, edad, duration_seconds, metadata, created_at",
+      "id, quiz_id, main_result, result_2, result_3, satisfied, centro, genero, edad, duration_seconds, metadata, created_at",
     )
     .order("created_at", { ascending: false })
     .limit(5000);
