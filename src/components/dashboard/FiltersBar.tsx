@@ -15,6 +15,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useFilterContext } from "@/contexts/FilterContext";
 
 interface Props {
   filters: DashboardFilters;
@@ -28,6 +29,7 @@ function uniq(values: (string | null)[]): string[] {
 }
 
 export function FiltersBar({ filters, onChange, submissions, allSubmissions }: Props) {
+  const { resetFilters } = useFilterContext();
   const source = allSubmissions && allSubmissions.length ? allSubmissions : submissions;
 
   const mapAgeToRange = (ageRaw: string | null) => {
@@ -82,9 +84,7 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
           <Button
             variant="ghost"
             size="sm"
-            onClick={() =>
-              onChange({ from: null, to: null, centro: null, genero: null, edad: null, main_result: null })
-            }
+            onClick={resetFilters}
           >
             <X className="mr-1 h-4 w-4" />
             Limpiar todo
@@ -98,6 +98,7 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
           <DatePicker
             value={filters.from}
             onChange={(v) => set("from", v)}
+            placeholder="Desde"
           />
         </div>
         <div>
@@ -105,6 +106,7 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
           <DatePicker
             value={filters.to}
             onChange={(v) => set("to", v)}
+            placeholder="Hasta"
           />
         </div>
         <div>
@@ -179,14 +181,15 @@ export function FiltersBar({ filters, onChange, submissions, allSubmissions }: P
 function DatePicker({
   value,
   onChange,
+  placeholder,
 }: {
   value: string | null;
   onChange: (v: string | null) => void;
+  placeholder: string;
 }) {
   const [open, setOpen] = useState(false);
 
   const parsed = value ? new Date(value + "T12:00:00") : null;
-  const todayFormatted = format(new Date(), "dd/MM/yyyy", { locale: es });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -201,7 +204,7 @@ function DatePicker({
         >
           <CalendarIcon className="h-3.5 w-3.5 shrink-0 opacity-60" />
           <span className="flex-1 text-left">
-            {parsed ? format(parsed, "dd/MM/yyyy", { locale: es }) : todayFormatted}
+            {parsed ? format(parsed, "dd/MM/yyyy", { locale: es }) : placeholder}
           </span>
           {parsed && (
             <X
