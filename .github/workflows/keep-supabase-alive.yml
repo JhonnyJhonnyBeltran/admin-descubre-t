@@ -1,0 +1,37 @@
+name: Keep Supabase Alive
+
+# Este workflow hace una petición real a la base de datos de Supabase
+# cada pocos días para evitar que el proyecto se pause por inactividad
+# en el plan gratuito (se pausa tras 7 días sin actividad).
+
+on:
+  schedule:
+    # Se ejecuta cada 3 días a las 09:00 UTC.
+    # Ajusta el cron si quieres otra frecuencia (máximo recomendado: cada 6 días).
+    - cron: "0 9 */3 * *"
+  workflow_dispatch: {} # permite lanzarlo manualmente desde la pestaña Actions
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query Supabase table to generate activity
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_TABLE: "quiz_submissions"
+        run: |
+          response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          echo "HTTP status: $response"
+          cat /tmp/response.json
+
+          if [ "$response" -ge 200 ] && [ "$response" -lt 300 ]; then
+            echo "Supabase respondió correctamente. Proyecto activo."
+          else
+            echo "Error al contactar con Supabase (status $response)."
+            exit 1
+          fi
