@@ -15,18 +15,19 @@ jobs:
   ping-supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Query Supabase to generate activity
+      - name: Query Supabase table to generate activity
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          # service_role (a.k.a. "secret key" en el dashboard nuevo de Supabase):
+          # ignora RLS y grants por tabla, así que no depende de permisos del
+          # rol anon. Nunca se expone al cliente, solo vive como secret de CI.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_TABLE: "quiz_submissions"
         run: |
-          # Se llama al endpoint raíz de PostgREST en vez de a una tabla concreta:
-          # solo requiere una apikey válida y no depende de permisos (GRANT/RLS)
-          # sobre ninguna tabla, evitando falsos negativos por permisos.
           response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
-            "${SUPABASE_URL}/rest/v1/" \
-            -H "apikey: ${SUPABASE_ANON_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+            "${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}")
 
           echo "HTTP status: $response"
           cat /tmp/response.json
