@@ -15,14 +15,16 @@ jobs:
   ping-supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Query Supabase table to generate activity
+      - name: Query Supabase to generate activity
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SUPABASE_TABLE: "quiz_submissions"
         run: |
+          # Se llama al endpoint raíz de PostgREST en vez de a una tabla concreta:
+          # solo requiere una apikey válida y no depende de permisos (GRANT/RLS)
+          # sobre ninguna tabla, evitando falsos negativos por permisos.
           response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
-            "${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id&limit=1" \
+            "${SUPABASE_URL}/rest/v1/" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
 
