@@ -1,14 +1,16 @@
 name: Keep Supabase Alive
 
-# Este workflow hace una petición real a la base de datos de Supabase
-# cada pocos días para evitar que el proyecto se pause por inactividad
-# en el plan gratuito (se pausa tras 7 días sin actividad).
+# Este workflow hace varias peticiones reales a la base de datos de Supabase
+# varias veces al día para evitar que el proyecto se pause por inactividad
+# en el plan gratuito. Supabase evalúa la actividad de la última semana y
+# recomienda "unas pocas peticiones cada día", así que una llamada cada
+# 3 días ya no es suficiente.
 
 on:
   schedule:
-    # Se ejecuta cada 3 días a las 09:00 UTC.
-    # Ajusta el cron si quieres otra frecuencia (máximo recomendado: cada 6 días).
-    - cron: "0 9 */3 * *"
+    # 4 veces al día (cada 6 horas, en el minuto 17 para evitar los
+    # retrasos de GitHub en las horas en punto). Horario en UTC.
+    - cron: "17 */6 * * *"
   workflow_dispatch: {} # permite lanzarlo manualmente desde la pestaña Actions
 
 jobs:
@@ -24,17 +26,22 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_TABLE: "quiz_submissions"
         run: |
-          response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
-            "${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id&limit=1" \
-            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}")
+          # Varias consultas por ejecución para generar algo más de actividad.
+          for i in 1 2 3; do
+            response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+              "${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=id&limit=1" \
+              -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}")
 
-          echo "HTTP status: $response"
-          cat /tmp/response.json
+            echo "Intento $i - HTTP status: $response"
 
-          if [ "$response" -ge 200 ] && [ "$response" -lt 300 ]; then
-            echo "Supabase respondió correctamente. Proyecto activo."
-          else
-            echo "Error al contactar con Supabase (status $response)."
-            exit 1
-          fi
+            if [ "$response" -lt 200 ] || [ "$response" -ge 300 ]; then
+              cat /tmp/response.json
+              echo "Error al contactar con Supabase (status $response)."
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          echo "Supabase respondió correctamente. Proyecto activo."
